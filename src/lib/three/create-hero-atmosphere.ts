@@ -217,28 +217,6 @@ async function loadSkyTexture(url: string, signal: AbortSignal) {
     throw new DOMException("Hero atmosphere loading cancelled", "AbortError");
   }
 
-  if (typeof createImageBitmap === "function") {
-    const bitmap = await createImageBitmap(blob);
-    if (signal.aborted) {
-      bitmap.close();
-      throw new DOMException("Hero atmosphere loading cancelled", "AbortError");
-    }
-
-    const texture = new THREE.Texture(bitmap);
-    texture.colorSpace = THREE.SRGBColorSpace;
-    texture.minFilter = THREE.LinearFilter;
-    texture.magFilter = THREE.LinearFilter;
-    texture.generateMipmaps = false;
-    texture.needsUpdate = true;
-
-    return {
-      texture,
-      width: bitmap.width,
-      height: bitmap.height,
-      disposeImage: () => bitmap.close(),
-    };
-  }
-
   const objectUrl = URL.createObjectURL(blob);
   const image = new Image();
   image.decoding = "async";
@@ -265,7 +243,6 @@ async function loadSkyTexture(url: string, signal: AbortSignal) {
     texture,
     width: image.naturalWidth,
     height: image.naturalHeight,
-    disposeImage: () => undefined,
   };
 }
 
@@ -304,7 +281,6 @@ export async function createHeroAtmosphere(
 
   if (signal.aborted) {
     loadedTexture.texture.dispose();
-    loadedTexture.disposeImage();
     renderer.dispose();
     renderer.forceContextLoss();
     host.replaceChildren();
@@ -453,7 +429,6 @@ export async function createHeroAtmosphere(
       geometry.dispose();
       material.dispose();
       loadedTexture.texture.dispose();
-      loadedTexture.disposeImage();
 
       renderer.dispose();
       renderer.forceContextLoss();
