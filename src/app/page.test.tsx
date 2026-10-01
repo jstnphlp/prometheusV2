@@ -29,6 +29,13 @@ vi.mock(
   }),
 );
 
+vi.mock(
+  "@/components/portfolio/project-library/project-library-client",
+  () => ({
+    ProjectLibraryClient: () => null,
+  }),
+);
+
 afterEach(cleanup);
 
 describe("portfolio homepage", () => {
@@ -52,6 +59,16 @@ describe("portfolio homepage", () => {
       screen.getByRole("heading", { level: 1 }).closest("section")
         ?.nextElementSibling,
     ).toBe(gallery);
+
+    const libraryHeading = screen.getByRole("heading", {
+      level: 2,
+      name: "The Prometheus Library",
+    });
+    const library = libraryHeading.closest("section");
+    expect(library).toHaveAttribute("id", "library");
+    expect(gallery?.nextElementSibling).toBe(library);
+    expect(library?.nextElementSibling).toHaveAttribute("id", "approach");
+
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
 
     expect(
