@@ -16,6 +16,7 @@ export function HeroAtmosphereClient() {
   useEffect(() => {
     const host = hostRef.current;
     if (!host) return;
+    const hostElement: HTMLDivElement = host;
 
     const controller = new AbortController();
     const reducedMotion = window.matchMedia(
@@ -33,7 +34,7 @@ export function HeroAtmosphereClient() {
         if (controller.signal.aborted) return;
 
         const scene = await createHeroAtmosphere({
-          host,
+          host: hostElement,
           textureUrl: "/assets/hero/sky.webp",
           signal: controller.signal,
           reducedMotion: reducedMotion.matches,
@@ -61,7 +62,7 @@ export function HeroAtmosphereClient() {
           },
           { threshold: 0.01 },
         );
-        intersectionObserver.observe(host);
+        intersectionObserver.observe(hostElement);
       } catch (error) {
         if (
           controller.signal.aborted ||
