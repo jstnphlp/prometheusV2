@@ -94,9 +94,9 @@ export function HeroAtmosphereClient() {
         alt=""
         fill
         sizes="100vw"
-        priority
+        loading="eager"
         draggable={false}
-        data-hidden={ready && !failed}
+        data-hidden={ready && !failed ? "true" : "false"}
       />
       <div ref={hostRef} className={styles.canvasHost} />
     </div>
