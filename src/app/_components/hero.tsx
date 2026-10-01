@@ -1,5 +1,7 @@
 import Image from "next/image";
 
+import { HeroAtmosphereClient } from "@/components/portfolio/hero/hero-atmosphere-client";
+
 import { HeroNavigation } from "./hero-navigation";
 import styles from "./hero.module.css";
 
@@ -9,15 +11,7 @@ export function Hero() {
       <HeroNavigation />
       <section id="top" className={styles.hero} aria-labelledby="hero-title">
         <div className={styles.scene} aria-hidden="true">
-          <Image
-            className={styles.sky}
-            src="/assets/hero/sky.webp"
-            alt=""
-            fill
-            sizes="100vw"
-            preload
-            draggable={false}
-          />
+          <HeroAtmosphereClient forceMotion />
         </div>
         <div className={styles.figure} aria-hidden="true">
           <Image
