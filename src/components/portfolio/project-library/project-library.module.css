@@ -1,0 +1,387 @@
+.library {
+  display: flex;
+  height: 100svh;
+  min-height: 620px;
+  flex-direction: column;
+  overflow: hidden;
+  background: #181511;
+  color: #e9dfd0;
+  padding: 0 24px;
+}
+
+.header {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 18px 0 16px;
+}
+
+.heading h2 {
+  margin: 3px 0 0;
+  font-family: "Libre Caslon Display", Georgia, "Times New Roman", serif;
+  font-size: clamp(1.5rem, 2.1vw, 2rem);
+  font-weight: 400;
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+}
+
+.eyebrow,
+.overlayEyebrow,
+.bookCategory {
+  margin: 0;
+  font-family: "DM Sans", Arial, Helvetica, sans-serif;
+  font-size: 0.56rem;
+  font-weight: 400;
+  line-height: 1.4;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #b8ab98;
+}
+
+.introduction {
+  margin: 0;
+  color: #b8ab98;
+  font-family: "Libre Caslon Display", Georgia, "Times New Roman", serif;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  text-align: right;
+}
+
+.experience {
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+}
+
+.stage {
+  position: relative;
+  display: flex;
+  min-height: 260px;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px solid #30291f;
+  background: #100e0b;
+  isolation: isolate;
+}
+
+.canvasHost {
+  position: absolute;
+  inset: 0;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: #100e0b;
+}
+
+.overlayContent {
+  width: min(100%, 340px);
+  text-align: center;
+}
+
+.overlayEyebrow {
+  color: #d1b17e;
+}
+
+.overlayTitle {
+  margin: 12px 0 24px;
+  font-family: "Libre Caslon Display", Georgia, "Times New Roman", serif;
+  font-size: 1.3rem;
+  font-weight: 400;
+  line-height: 1.35;
+}
+
+.progress {
+  display: block;
+  width: 100%;
+  height: 2px;
+  overflow: hidden;
+  border: 0;
+  border-radius: 0;
+  background: #362e23;
+  accent-color: #d1b17e;
+}
+
+.progress::-webkit-progress-bar {
+  background: #362e23;
+}
+
+.progress::-webkit-progress-value,
+.progress::-moz-progress-bar {
+  background: #d1b17e;
+}
+
+.fallbackText {
+  margin: 14px 0 0;
+  color: #d5c6b3;
+  font-family: "DM Sans", Arial, Helvetica, sans-serif;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.toolbar {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 20px;
+  padding: 12px 0 0;
+}
+
+.bookNavigation {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.bookButton {
+  display: flex;
+  min-height: 56px;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 4px;
+  border: 1px solid #44392b;
+  border-radius: 0;
+  background: #1c1813;
+  color: #dfd1ba;
+  padding: 9px 14px;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    color 160ms ease,
+    background-color 160ms ease;
+}
+
+.bookButton:hover,
+.bookButton[data-hovered="true"] {
+  border-color: #8c7350;
+  background: #262017;
+  color: #f4e6cc;
+}
+
+.bookButton[data-active="true"] {
+  border-color: #b59562;
+  background: #33291d;
+  color: #f3e1bf;
+}
+
+.bookButton[data-active="true"] .bookCategory {
+  color: #d2b581;
+}
+
+.bookButton:disabled {
+  cursor: wait;
+  opacity: 0.5;
+}
+
+.bookTitle {
+  font-family: "Libre Caslon Display", Georgia, "Times New Roman", serif;
+  font-size: 0.95rem;
+  line-height: 1.25;
+}
+
+.bookCategory {
+  font-size: 0.5rem;
+  letter-spacing: 0.12em;
+}
+
+.close {
+  min-height: 44px;
+  flex: 0 0 auto;
+  border: 0;
+  background: transparent;
+  color: #d1b17e;
+  padding: 10px 0 10px 10px;
+  font-family: "DM Sans", Arial, Helvetica, sans-serif;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.close span {
+  display: inline-block;
+  margin-left: 7px;
+}
+
+.close:hover {
+  color: #f3dcaf;
+}
+
+.footer {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 9px 0 11px;
+  color: #a59885;
+  font-family: "DM Sans", Arial, Helvetica, sans-serif;
+  font-size: 0.63rem;
+  line-height: 1.4;
+}
+
+.footer p {
+  margin: 0;
+}
+
+.selectionStatus {
+  min-height: 14px;
+  color: #d1b994;
+  text-align: right;
+}
+
+.noScript {
+  margin: 0;
+  padding: 12px 0;
+  color: #d5c6b3;
+  font-family: "DM Sans", Arial, Helvetica, sans-serif;
+  font-size: 0.8rem;
+}
+
+@media (min-width: 1400px) {
+  .library {
+    padding-inline: 32px;
+  }
+
+  .header {
+    padding-block: 20px 18px;
+  }
+}
+
+@media (max-width: 720px) {
+  .library {
+    min-height: 680px;
+    padding-inline: 12px;
+  }
+
+  .header {
+    align-items: flex-start;
+    gap: 16px;
+    padding: 14px 0 12px;
+  }
+
+  .introduction {
+    max-width: 170px;
+    font-size: 0.72rem;
+  }
+
+  .introduction br {
+    display: none;
+  }
+
+  .toolbar {
+    flex-wrap: wrap;
+    gap: 6px;
+    padding-top: 9px;
+  }
+
+  .bookNavigation {
+    flex-basis: 100%;
+    gap: 6px;
+  }
+
+  .bookButton {
+    min-height: 57px;
+    padding: 8px;
+  }
+
+  .bookTitle {
+    font-size: 0.82rem;
+  }
+
+  .bookCategory {
+    font-size: 0.44rem;
+    letter-spacing: 0.07em;
+  }
+
+  .close {
+    min-height: 32px;
+    margin-left: auto;
+    padding-block: 5px;
+    font-size: 0.75rem;
+  }
+
+  .footer {
+    gap: 12px;
+    padding-block: 8px 10px;
+    font-size: 0.56rem;
+  }
+}
+
+@media (max-width: 440px) {
+  .header {
+    gap: 12px;
+  }
+
+  .introduction {
+    display: none;
+  }
+
+  .bookNavigation {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .bookButton {
+    min-height: 50px;
+    padding: 7px 10px;
+  }
+
+  .footer {
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .selectionStatus {
+    text-align: left;
+  }
+}
+
+@media (max-height: 600px) and (min-width: 721px) {
+  .library {
+    min-height: 520px;
+  }
+
+  .header {
+    padding-block: 10px;
+  }
+
+  .introduction {
+    font-size: 0.7rem;
+  }
+
+  .heading h2 {
+    font-size: 1.4rem;
+  }
+
+  .bookButton {
+    min-height: 46px;
+    padding-block: 6px;
+  }
+
+  .toolbar {
+    padding-top: 8px;
+  }
+
+  .footer {
+    padding-block: 6px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bookButton {
+    transition: none;
+  }
+}
