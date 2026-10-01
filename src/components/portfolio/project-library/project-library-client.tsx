@@ -200,6 +200,12 @@ export function ProjectLibraryClient() {
               disabled={status !== "ready"}
               aria-pressed={selected === book.id}
               onClick={() => selectBook(book.id)}
+              onPointerEnter={() =>
+                controllerRef.current?.setHovered(book.id)
+              }
+              onPointerLeave={() => controllerRef.current?.setHovered(null)}
+              onFocus={() => controllerRef.current?.setHovered(book.id)}
+              onBlur={() => controllerRef.current?.setHovered(null)}
             >
               <span className={styles.bookCategory}>{book.category}</span>
               <span className={styles.bookTitle}>{book.title}</span>
