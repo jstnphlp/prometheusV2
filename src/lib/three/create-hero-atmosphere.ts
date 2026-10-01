@@ -17,9 +17,9 @@ export const defaultHeroAtmosphereTuning: HeroAtmosphereTuning = {
   midCloudSpeed: 0.032,
   farDistortion: 0.0022,
   midDistortion: 0.0034,
-  sunIntensity: 0.52,
-  sunRayOpacity: 0.36,
-  sunMovement: 0.05,
+  sunIntensity: 0.42,
+  sunRayOpacity: 0.3,
+  sunMovement: 0.16,
 };
 
 type HeroAtmosphereOptions = {
@@ -132,8 +132,15 @@ const fragmentShader = `
     return left * right * bottom * top;
   }
 
+  vec2 overscanUv(vec2 uv) {
+    // Pull sampling slightly toward the center to create hidden source-image
+    // margin for cloud motion. This avoids clamping the last texel into bands.
+    const float scale = 0.95;
+    return (uv - 0.5) * scale + 0.5;
+  }
+
   void main() {
-    vec2 imageUv = coverUv(vUv);
+    vec2 imageUv = overscanUv(coverUv(vUv));
     float time = uTime;
 
     // Cover the whole painted sky with overlapping, feathered atmosphere zones.
@@ -236,45 +243,46 @@ const fragmentShader = `
       cos(time * 0.041) * 0.0006
     );
 
-    // Fade motion near the source-image bounds so UV motion does not repeatedly
-    // sample the final edge texel and create visible horizontal smearing.
-    float edgeFade = edgeAttenuation(imageUv, 0.035, 0.07);
-
     vec2 totalMotion =
       globalDrift +
       zoneFlow * atmosphereMask +
       noiseFlow * distortionAmount * atmosphereMask;
 
+    // Overscan gives the animation room to move at the far left and right.
+    // We still soften only the final few percent as a safety guard, but we do
+    // not clamp moving UVs to the image edge, which caused the smeared bands.
+    float edgeFade = edgeAttenuation(imageUv, 0.018, 0.035);
     vec2 warpedUv = imageUv + totalMotion * edgeFade;
 
-    // Keep a safer sampling margin as a final guard against texture-edge drag.
-    warpedUv = clamp(warpedUv, vec2(0.01), vec2(0.99));
-
-    vec4 sky = texture2D(uSky, warpedUv);
+    vec4 baseSky = texture2D(uSky, imageUv);
+    vec4 movedSky = texture2D(uSky, warpedUv);
+    vec4 sky = mix(baseSky, movedSky, edgeFade);
     vec3 color = sky.rgb;
 
     // The source sits just beyond the upper-left edge. A few broad angular
     // bands create soft painterly rays rather than a lens-flare effect.
     vec2 movingSun = vec2(
-      -0.035 + sin(time * uSunMovement) * 0.025,
-      1.045 + cos(time * uSunMovement * 0.73) * 0.016
+      -0.035 + sin(time * uSunMovement * 0.52) * 0.018,
+      1.045 + cos(time * uSunMovement * 0.41) * 0.012
     );
     vec2 fromSun = imageUv - movingSun;
     float sunDistance = length(fromSun);
     float sunAngle = atan(fromSun.y, fromSun.x);
 
-    float rayWobble =
-      sin(time * uSunMovement * 1.6) * 0.035 +
-      sin(time * uSunMovement * 0.57 + 1.2) * 0.018;
-    float rayOne = gaussian(sunAngle, -0.70 + rayWobble, 0.085);
-    float rayTwo = gaussian(sunAngle, -0.84 + rayWobble * 0.72, 0.070);
-    float rayThree = gaussian(sunAngle, -0.99 + rayWobble * 0.45, 0.090);
+    // Make the rays visibly sweep while keeping their brightness restrained.
+    // The motion is directional rather than a stronger flare.
+    float raySweep =
+      sin(time * uSunMovement) * 0.065 +
+      sin(time * uSunMovement * 0.37 + 1.2) * 0.026;
+    float rayOne = gaussian(sunAngle, -0.70 + raySweep, 0.085);
+    float rayTwo = gaussian(sunAngle, -0.84 + raySweep * 0.78, 0.070);
+    float rayThree = gaussian(sunAngle, -0.99 + raySweep * 0.52, 0.090);
     float distanceEnvelope =
       smoothstep(0.06, 0.28, sunDistance) *
       (1.0 - smoothstep(0.78, 1.32, sunDistance));
 
     float rayNoise = 0.76 + fbm(
-      imageUv * 5.5 + vec2(time * 0.012, -time * 0.006)
+      imageUv * 5.5 + vec2(time * 0.032, -time * 0.015)
     ) * 0.24;
     float slowBreath =
       0.88 +
@@ -287,18 +295,9 @@ const fragmentShader = `
       * uSunRayOpacity;
 
     float halo = exp(-sunDistance * sunDistance * 7.5) * uSunIntensity;
-    float flareCore =
-      exp(-sunDistance * sunDistance * 24.0) * uSunIntensity * 0.22;
-    float flareBloom =
-      exp(-sunDistance * sunDistance * 4.2) * uSunIntensity * 0.20;
-    vec3 warmLight = vec3(1.0, 0.80, 0.54);
+    vec3 warmLight = vec3(1.0, 0.79, 0.52);
 
-    color += warmLight * (
-      rays * 1.18 +
-      halo * 0.18 +
-      flareCore +
-      flareBloom
-    );
+    color += warmLight * (rays + halo * 0.16);
 
     gl_FragColor = vec4(color, sky.a);
     #include <tonemapping_fragment>
