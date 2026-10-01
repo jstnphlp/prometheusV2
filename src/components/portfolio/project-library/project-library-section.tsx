@@ -20,9 +20,7 @@ export function ProjectLibrarySection() {
           <h2 id="library-title">{prometheusLibrary.title}</h2>
         </div>
         <p className={styles.introduction}>
-          A collection of partnerships and possibilities.
-          <br />
-          Choose a volume to explore.
+          {prometheusLibrary.introduction}
         </p>
       </header>
 
