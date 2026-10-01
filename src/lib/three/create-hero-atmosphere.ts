@@ -126,48 +126,112 @@ const fragmentShader = `
     vec2 imageUv = coverUv(vUv);
     float time = uTime;
 
-    // These broad masks are deliberately soft. They only animate selected cloud
-    // regions in the flattened prototype sky, avoiding whole-image wobble.
-    float farMask = ellipseMask(
+    // Cover the whole painted sky with overlapping, feathered atmosphere zones.
+    // Each zone drifts on a slightly different vector so cloud masses across
+    // the entire frame move instead of only the original middle-left region.
+    float zoneUpperLeft = ellipseMask(
       imageUv,
-      vec2(0.68, 0.67),
-      vec2(0.31, 0.25),
-      0.42
+      vec2(0.17, 0.72),
+      vec2(0.34, 0.38),
+      0.48
     );
-    float midMask = ellipseMask(
+    float zoneUpperMiddle = ellipseMask(
       imageUv,
-      vec2(0.27, 0.55),
-      vec2(0.33, 0.37),
-      0.46
+      vec2(0.48, 0.72),
+      vec2(0.34, 0.34),
+      0.48
+    );
+    float zoneUpperRight = ellipseMask(
+      imageUv,
+      vec2(0.82, 0.70),
+      vec2(0.34, 0.36),
+      0.48
+    );
+    float zoneLowerLeft = ellipseMask(
+      imageUv,
+      vec2(0.20, 0.36),
+      vec2(0.36, 0.30),
+      0.50
+    );
+    float zoneLowerRight = ellipseMask(
+      imageUv,
+      vec2(0.70, 0.37),
+      vec2(0.40, 0.31),
+      0.50
     );
 
     float farPhase = time * uFarCloudSpeed * TAU;
     float midPhase = time * uMidCloudSpeed * TAU;
 
-    // Use enough travel to make the prototype visibly alive. Because this
-    // version still samples a flattened painting, the motion stays localized
-    // and soft rather than translating the entire background.
-    vec2 farDrift = vec2(
-      (sin(farPhase) + sin(farPhase * 0.43 + 1.1) * 0.28) * 0.008,
-      cos(farPhase * 0.73) * 0.0018
+    vec2 driftUpperLeft = vec2(
+      sin(farPhase + 0.2) * 0.010,
+      cos(farPhase * 0.71 + 0.5) * 0.0023
     );
-    vec2 midDrift = vec2(
-      (sin(midPhase + 1.7) + sin(midPhase * 0.37 + 0.2) * 0.24) * 0.014,
-      cos(midPhase * 0.67 + 0.4) * 0.003
+    vec2 driftUpperMiddle = vec2(
+      sin(midPhase * 0.82 + 1.3) * 0.012,
+      cos(midPhase * 0.54 + 1.1) * 0.0027
+    );
+    vec2 driftUpperRight = vec2(
+      sin(farPhase * 1.16 + 2.1) * 0.011,
+      cos(farPhase * 0.63 + 0.8) * 0.0024
+    );
+    vec2 driftLowerLeft = vec2(
+      sin(midPhase * 0.66 + 2.6) * 0.009,
+      cos(midPhase * 0.52 + 1.9) * 0.0020
+    );
+    vec2 driftLowerRight = vec2(
+      sin(midPhase * 0.91 + 3.5) * 0.013,
+      cos(midPhase * 0.58 + 2.7) * 0.0025
     );
 
-    float farNoise = fbm(imageUv * 3.2 + vec2(time * 0.014, -time * 0.006));
-    float midNoise = fbm(imageUv * 4.4 + vec2(-time * 0.02, time * 0.009));
+    float broadNoise = fbm(
+      imageUv * 3.5 + vec2(time * 0.016, -time * 0.007)
+    );
+    float detailNoise = fbm(
+      imageUv * 5.2 + vec2(-time * 0.023, time * 0.010)
+    );
 
-    vec2 warpedUv = imageUv;
-    warpedUv += farMask * (
-      farDrift +
-      vec2(farNoise - 0.5, (0.5 - farNoise) * 0.55) * uFarDistortion
+    vec2 noiseFlow = vec2(
+      broadNoise - 0.5,
+      (detailNoise - 0.5) * 0.55
     );
-    warpedUv += midMask * (
-      midDrift +
-      vec2(midNoise - 0.5, (midNoise - 0.5) * 0.4) * uMidDistortion
+
+    float zoneWeight =
+      zoneUpperLeft +
+      zoneUpperMiddle +
+      zoneUpperRight +
+      zoneLowerLeft +
+      zoneLowerRight;
+
+    vec2 zoneFlow =
+      zoneUpperLeft * driftUpperLeft +
+      zoneUpperMiddle * driftUpperMiddle +
+      zoneUpperRight * driftUpperRight +
+      zoneLowerLeft * driftLowerLeft +
+      zoneLowerRight * driftLowerRight;
+
+    zoneFlow /= max(zoneWeight, 1.0);
+
+    float atmosphereMask = clamp(zoneWeight, 0.0, 1.0);
+    float distortionAmount = mix(
+      uFarDistortion,
+      uMidDistortion,
+      smoothstep(0.15, 0.85, imageUv.y)
     );
+
+    // Add a tiny global drift so the entire sky feels alive while the regional
+    // vectors keep the individual cloud groups from moving as one flat image.
+    vec2 globalDrift = vec2(
+      sin(time * 0.055) * 0.0028,
+      cos(time * 0.041) * 0.0009
+    );
+
+    vec2 warpedUv =
+      imageUv +
+      globalDrift +
+      zoneFlow * atmosphereMask +
+      noiseFlow * distortionAmount * atmosphereMask;
+
     warpedUv = clamp(warpedUv, vec2(0.001), vec2(0.999));
 
     vec4 sky = texture2D(uSky, warpedUv);
@@ -176,16 +240,19 @@ const fragmentShader = `
     // The source sits just beyond the upper-left edge. A few broad angular
     // bands create soft painterly rays rather than a lens-flare effect.
     vec2 movingSun = vec2(
-      -0.035 + sin(time * uSunMovement) * 0.012,
-      1.045 + cos(time * uSunMovement * 0.73) * 0.008
+      -0.035 + sin(time * uSunMovement) * 0.025,
+      1.045 + cos(time * uSunMovement * 0.73) * 0.016
     );
     vec2 fromSun = imageUv - movingSun;
     float sunDistance = length(fromSun);
     float sunAngle = atan(fromSun.y, fromSun.x);
 
-    float rayOne = gaussian(sunAngle, -0.72, 0.07);
-    float rayTwo = gaussian(sunAngle, -0.84, 0.055);
-    float rayThree = gaussian(sunAngle, -0.96, 0.075);
+    float rayWobble =
+      sin(time * uSunMovement * 1.6) * 0.035 +
+      sin(time * uSunMovement * 0.57 + 1.2) * 0.018;
+    float rayOne = gaussian(sunAngle, -0.70 + rayWobble, 0.085);
+    float rayTwo = gaussian(sunAngle, -0.84 + rayWobble * 0.72, 0.070);
+    float rayThree = gaussian(sunAngle, -0.99 + rayWobble * 0.45, 0.090);
     float distanceEnvelope =
       smoothstep(0.06, 0.28, sunDistance) *
       (1.0 - smoothstep(0.78, 1.32, sunDistance));
