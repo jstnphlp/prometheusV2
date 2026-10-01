@@ -1,0 +1,233 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+
+import { prometheusLibrary, type LibraryBook } from "@/content/library";
+import type { LibraryScene } from "@/lib/three/create-library-scene";
+
+import styles from "./project-library.module.css";
+
+type Status = "idle" | "loading" | "ready" | "fallback";
+
+export function ProjectLibraryClient() {
+  const hostRef = useRef<HTMLDivElement>(null);
+  const controllerRef = useRef<LibraryScene | null>(null);
+  const [status, setStatus] = useState<Status>("idle");
+  const [progress, setProgress] = useState(0);
+  const [loadingLabel, setLoadingLabel] = useState("Preparing the bookshelf...");
+  const [selected, setSelected] = useState<LibraryBook["id"] | null>(null);
+  const [hovered, setHovered] = useState<LibraryBook["id"] | null>(null);
+
+  useEffect(() => {
+    const host = hostRef.current;
+    if (!host) return;
+
+    const abort = new AbortController();
+    const motionPreference = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    );
+    const coarsePreference = window.matchMedia("(pointer: coarse)");
+    let alive = true;
+    let started = false;
+    let active = false;
+
+    function syncVisibility() {
+      controllerRef.current?.setVisible(active && !document.hidden);
+    }
+
+    async function loadScene() {
+      if (started) return;
+      started = true;
+      setStatus("loading");
+
+      try {
+        const { createLibraryScene } = await import(
+          "@/lib/three/create-library-scene"
+        );
+        if (!alive) return;
+
+        const controller = await createLibraryScene({
+          host,
+          environmentUrl: prometheusLibrary.environmentUrl,
+          books: prometheusLibrary.books,
+          signal: abort.signal,
+          reducedMotion: motionPreference.matches,
+          coarsePointer: coarsePreference.matches,
+          onProgress(nextProgress, label) {
+            if (!alive) return;
+            setProgress(nextProgress);
+            setLoadingLabel(label);
+          },
+          onSelectionChange(bookId) {
+            if (alive) setSelected(bookId);
+          },
+          onHoverChange(bookId) {
+            if (alive) setHovered(bookId);
+          },
+          onContextLost() {
+            if (alive) setStatus("fallback");
+          },
+        });
+
+        if (!alive) {
+          controller.dispose();
+          return;
+        }
+
+        controllerRef.current = controller;
+        controller.setVisible(active && !document.hidden);
+        setProgress(100);
+        setStatus("ready");
+      } catch (error) {
+        if (
+          alive &&
+          !abort.signal.aborted &&
+          !(error instanceof DOMException && error.name === "AbortError")
+        ) {
+          console.error("[Prometheus library]", error);
+          setStatus("fallback");
+        }
+      }
+    }
+
+    function motionChanged() {
+      controllerRef.current?.setReducedMotion(motionPreference.matches);
+    }
+
+    function pointerChanged() {
+      controllerRef.current?.setCoarsePointer(coarsePreference.matches);
+    }
+
+    const nearObserver = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          void loadScene();
+          nearObserver.disconnect();
+        }
+      },
+      { rootMargin: "350px" },
+    );
+
+    const visibilityObserver = new IntersectionObserver(
+      ([entry]) => {
+        active = entry.isIntersecting;
+        syncVisibility();
+      },
+      { threshold: 0.01 },
+    );
+
+    nearObserver.observe(host);
+    visibilityObserver.observe(host);
+    motionPreference.addEventListener("change", motionChanged);
+    coarsePreference.addEventListener("change", pointerChanged);
+    document.addEventListener("visibilitychange", syncVisibility);
+
+    return () => {
+      alive = false;
+      abort.abort();
+      nearObserver.disconnect();
+      visibilityObserver.disconnect();
+      motionPreference.removeEventListener("change", motionChanged);
+      coarsePreference.removeEventListener("change", pointerChanged);
+      document.removeEventListener("visibilitychange", syncVisibility);
+      controllerRef.current?.dispose();
+      controllerRef.current = null;
+    };
+  }, []);
+
+  function selectBook(bookId: LibraryBook["id"]) {
+    controllerRef.current?.selectBook(bookId);
+  }
+
+  function resetSelection() {
+    controllerRef.current?.resetSelection();
+  }
+
+  const selectedBook = prometheusLibrary.books.find(
+    (book) => book.id === selected,
+  );
+
+  return (
+    <div className={styles.experience}>
+      <div
+        className={styles.stage}
+        aria-label="Interactive antique bookshelf"
+        aria-describedby="library-instructions"
+        aria-busy={status === "loading"}
+      >
+        <div ref={hostRef} className={styles.canvasHost} aria-hidden="true" />
+
+        {(status === "idle" || status === "loading") && (
+          <div className={styles.overlay} role="status" aria-live="polite">
+            <div className={styles.overlayContent}>
+              <p className={styles.overlayEyebrow}>Opening the library</p>
+              <p className={styles.overlayTitle}>{loadingLabel}</p>
+              <progress
+                className={styles.progress}
+                max={100}
+                value={progress}
+                aria-label="Library loading progress"
+              />
+            </div>
+          </div>
+        )}
+
+        {status === "fallback" && (
+          <div className={styles.overlay} role="status">
+            <div className={styles.overlayContent}>
+              <p className={styles.overlayEyebrow}>Library preview unavailable</p>
+              <p className={styles.fallbackText}>
+                The interactive shelf could not load in this browser.
+                The project volumes are still listed below.
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className={styles.toolbar}>
+        <nav
+          className={styles.bookNavigation}
+          aria-label="Explore library volumes"
+        >
+          {prometheusLibrary.books.map((book) => (
+            <button
+              className={styles.bookButton}
+              data-active={selected === book.id}
+              data-hovered={hovered === book.id}
+              type="button"
+              key={book.id}
+              disabled={status !== "ready"}
+              aria-pressed={selected === book.id}
+              onClick={() => selectBook(book.id)}
+            >
+              <span className={styles.bookCategory}>{book.category}</span>
+              <span className={styles.bookTitle}>{book.title}</span>
+            </button>
+          ))}
+        </nav>
+
+        {selectedBook && (
+          <button
+            className={styles.close}
+            type="button"
+            onClick={resetSelection}
+          >
+            Return to shelf <span aria-hidden="true">↗</span>
+          </button>
+        )}
+      </div>
+
+      <footer className={styles.footer}>
+        <p id="library-instructions">
+          {selectedBook
+            ? "Select the cover again to return it, or choose another volume."
+            : "Select a cover on the shelf or a title below."}
+        </p>
+        <p className={styles.selectionStatus} role="status" aria-live="polite">
+          {selectedBook ? `${selectedBook.title} selected.` : ""}
+        </p>
+      </footer>
+    </div>
+  );
+}
