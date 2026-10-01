@@ -23,6 +23,7 @@ export type LibraryScene = {
   setVisible: (visible: boolean) => void;
   setReducedMotion: (reduced: boolean) => void;
   setCoarsePointer: (coarse: boolean) => void;
+  setHovered: (bookId: LibraryBook["id"] | null) => void;
   dispose: () => void;
 };
 
@@ -171,7 +172,7 @@ export async function createLibraryScene(
     options.onProgress?.(Math.max(0, Math.min(100, value)), label);
   }
 
-  function setHovered(next: LibraryBook["id"] | null) {
+  function updateHovered(next: LibraryBook["id"] | null) {
     if (hovered === next) return;
     hovered = next;
     renderDirty = true;
@@ -432,7 +433,7 @@ export async function createLibraryScene(
     const cameraChanging = animateCamera(dt);
 
     if (pointerDirty && now - lastRaycastTime >= 25) {
-      setHovered(pickBook());
+      updateHovered(pickBook());
       pointerDirty = false;
       lastRaycastTime = now;
     }
@@ -454,7 +455,7 @@ export async function createLibraryScene(
   function pointerMove(event: PointerEvent) {
     const inside = eventToPointer(event);
     if (!inside) {
-      setHovered(null);
+      updateHovered(null);
       parallax.set(0, 0);
       return;
     }
@@ -464,7 +465,7 @@ export async function createLibraryScene(
   }
 
   function pointerLeave() {
-    setHovered(null);
+    updateHovered(null);
     parallax.set(0, 0);
     pointerDirty = false;
   }
@@ -863,6 +864,10 @@ export async function createLibraryScene(
       }
       pointerDirty = true;
       renderDirty = true;
+      requestLoop();
+    },
+    setHovered(bookId) {
+      updateHovered(bookId);
       requestLoop();
     },
     dispose() {
