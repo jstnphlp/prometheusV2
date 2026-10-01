@@ -7,7 +7,13 @@ import type { HeroAtmosphereScene } from "@/lib/three/create-hero-atmosphere";
 
 import styles from "./hero-atmosphere.module.css";
 
-export function HeroAtmosphereClient() {
+type HeroAtmosphereClientProps = {
+  forceMotion?: boolean;
+};
+
+export function HeroAtmosphereClient({
+  forceMotion = false,
+}: HeroAtmosphereClientProps) {
   const hostRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<HeroAtmosphereScene | null>(null);
   const [ready, setReady] = useState(false);
@@ -37,7 +43,7 @@ export function HeroAtmosphereClient() {
           host: hostElement,
           textureUrl: "/assets/hero/sky.webp",
           signal: controller.signal,
-          reducedMotion: reducedMotion.matches,
+          reducedMotion: forceMotion ? false : reducedMotion.matches,
           tuning: defaultHeroAtmosphereTuning,
         });
 
@@ -50,7 +56,7 @@ export function HeroAtmosphereClient() {
         setReady(true);
 
         const handleReducedMotion = () => {
-          scene.setReducedMotion(reducedMotion.matches);
+          scene.setReducedMotion(forceMotion ? false : reducedMotion.matches);
         };
         reducedMotion.addEventListener("change", handleReducedMotion);
         reducedMotionCleanup = () =>
@@ -85,7 +91,7 @@ export function HeroAtmosphereClient() {
       sceneRef.current?.dispose();
       sceneRef.current = null;
     };
-  }, []);
+  }, [forceMotion]);
 
   return (
     <div className={styles.root}>
