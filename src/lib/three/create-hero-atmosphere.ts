@@ -11,13 +11,15 @@ export type HeroAtmosphereTuning = {
 };
 
 export const defaultHeroAtmosphereTuning: HeroAtmosphereTuning = {
-  farCloudSpeed: 0.01,
-  midCloudSpeed: 0.018,
-  farDistortion: 0.0012,
-  midDistortion: 0.0018,
-  sunIntensity: 0.34,
-  sunRayOpacity: 0.22,
-  sunMovement: 0.014,
+  // Prototype values are intentionally visible enough to judge in a browser.
+  // Once final transparent cloud assets exist, these can be reduced again.
+  farCloudSpeed: 0.018,
+  midCloudSpeed: 0.032,
+  farDistortion: 0.0022,
+  midDistortion: 0.0034,
+  sunIntensity: 0.42,
+  sunRayOpacity: 0.3,
+  sunMovement: 0.045,
 };
 
 type HeroAtmosphereOptions = {
@@ -142,17 +144,20 @@ const fragmentShader = `
     float farPhase = time * uFarCloudSpeed * TAU;
     float midPhase = time * uMidCloudSpeed * TAU;
 
+    // Use enough travel to make the prototype visibly alive. Because this
+    // version still samples a flattened painting, the motion stays localized
+    // and soft rather than translating the entire background.
     vec2 farDrift = vec2(
-      sin(farPhase) * 0.0024,
-      cos(farPhase * 0.73) * 0.0007
+      (sin(farPhase) + sin(farPhase * 0.43 + 1.1) * 0.28) * 0.008,
+      cos(farPhase * 0.73) * 0.0018
     );
     vec2 midDrift = vec2(
-      sin(midPhase + 1.7) * 0.0035,
-      cos(midPhase * 0.67 + 0.4) * 0.0011
+      (sin(midPhase + 1.7) + sin(midPhase * 0.37 + 0.2) * 0.24) * 0.014,
+      cos(midPhase * 0.67 + 0.4) * 0.003
     );
 
-    float farNoise = fbm(imageUv * 3.2 + vec2(time * 0.004, -time * 0.002));
-    float midNoise = fbm(imageUv * 4.4 + vec2(-time * 0.006, time * 0.003));
+    float farNoise = fbm(imageUv * 3.2 + vec2(time * 0.014, -time * 0.006));
+    float midNoise = fbm(imageUv * 4.4 + vec2(-time * 0.02, time * 0.009));
 
     vec2 warpedUv = imageUv;
     warpedUv += farMask * (
@@ -188,7 +193,10 @@ const fragmentShader = `
     float rayNoise = 0.76 + fbm(
       imageUv * 5.5 + vec2(time * 0.012, -time * 0.006)
     ) * 0.24;
-    float slowBreath = 0.92 + sin(time * 0.17) * 0.08;
+    float slowBreath =
+      0.88 +
+      sin(time * 0.24) * 0.08 +
+      sin(time * 0.071 + 1.4) * 0.04;
     float rays = (rayOne * 0.8 + rayTwo + rayThree * 0.65)
       * distanceEnvelope
       * rayNoise
