@@ -65,13 +65,6 @@ export function HeroNavigation() {
               <Dialog.Description className={styles.navDescription}>
                 Creative technology. Thoughtful digital systems.
               </Dialog.Description>
-
-              <div className={styles.navFooter}>
-                <p>Good things begin with an idea.</p>
-                <a href="#contact" onClick={() => setOpen(false)}>
-                  Start a conversation <span aria-hidden="true">→</span>
-                </a>
-              </div>
             </aside>
 
             <nav className={styles.navLinks} aria-label="Primary navigation">
@@ -85,6 +78,13 @@ export function HeroNavigation() {
                 </a>
               ))}
             </nav>
+
+            <div className={styles.navBottom}>
+              <p>Good things begin with an idea.</p>
+              <a href="#contact" onClick={() => setOpen(false)}>
+                Start a conversation <span aria-hidden="true">→</span>
+              </a>
+            </div>
           </div>
         </Dialog.Popup>
       </Dialog.Portal>
