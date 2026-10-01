@@ -525,7 +525,10 @@ export async function createLibraryScene(
       node.traverse((object) => {
         if (!(object instanceof THREE.Mesh)) return;
         receiverMeshes.add(object);
-        object.material.dispose();
+        const receiverMaterials = Array.isArray(object.material)
+          ? object.material
+          : [object.material];
+        receiverMaterials.forEach((material) => material.dispose());
         object.material = new THREE.ShadowMaterial({
           color: 0x000000,
           opacity: 0.28,
@@ -597,7 +600,7 @@ export async function createLibraryScene(
 
       object.material = Array.isArray(object.material)
         ? materials
-        : materials[0];
+        : materials[0]!;
       staticMeshes.push(object);
     });
 
@@ -878,8 +881,8 @@ export async function createLibraryScene(
       );
 
       lights.forEach((light) => {
-        if (light instanceof THREE.Light && light.shadow?.map) {
-          light.shadow.map.dispose();
+        if (light instanceof THREE.DirectionalLight) {
+          light.shadow.map?.dispose();
         }
         light.removeFromParent();
       });
