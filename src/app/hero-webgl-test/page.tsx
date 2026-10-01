@@ -15,7 +15,7 @@ export default function HeroWebglTestPage() {
           aria-labelledby="hero-webgl-test-title"
         >
           <div className={heroStyles.scene} aria-hidden="true">
-            <HeroAtmosphereClient />
+            <HeroAtmosphereClient forceMotion />
           </div>
 
           <div className={heroStyles.figure} aria-hidden="true">
