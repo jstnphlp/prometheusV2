@@ -1,4 +1,5 @@
 import { ProjectGallerySection } from "@/components/portfolio/project-gallery/project-gallery-section";
+import { ProjectLibrarySection } from "@/components/portfolio/project-library/project-library-section";
 
 import { Hero } from "./_components/hero";
 import { StickyViewports } from "./_components/sticky-viewports";
@@ -18,6 +19,8 @@ export default function Home() {
       <Hero />
 
       <ProjectGallerySection />
+
+      <ProjectLibrarySection />
 
       <section
         id="approach"
