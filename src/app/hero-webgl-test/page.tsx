@@ -25,7 +25,7 @@ export default function HeroWebglTestPage() {
               width={986}
               height={718}
               sizes="(max-width: 640px) 124vw, (max-width: 1000px) 95vw, 62vw"
-              priority
+              loading="eager"
               draggable={false}
             />
           </div>
