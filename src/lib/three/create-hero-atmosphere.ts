@@ -17,9 +17,9 @@ export const defaultHeroAtmosphereTuning: HeroAtmosphereTuning = {
   midCloudSpeed: 0.032,
   farDistortion: 0.0022,
   midDistortion: 0.0034,
-  sunIntensity: 0.42,
-  sunRayOpacity: 0.3,
-  sunMovement: 0.045,
+  sunIntensity: 0.52,
+  sunRayOpacity: 0.36,
+  sunMovement: 0.05,
 };
 
 type HeroAtmosphereOptions = {
@@ -122,6 +122,16 @@ const fragmentShader = `
     return exp(-(normalized * normalized));
   }
 
+  float edgeAttenuation(vec2 uv, float margin, float feather) {
+    float left = smoothstep(margin, margin + feather, uv.x);
+    float right =
+      1.0 - smoothstep(1.0 - margin - feather, 1.0 - margin, uv.x);
+    float bottom = smoothstep(margin, margin + feather, uv.y);
+    float top =
+      1.0 - smoothstep(1.0 - margin - feather, 1.0 - margin, uv.y);
+    return left * right * bottom * top;
+  }
+
   void main() {
     vec2 imageUv = coverUv(vUv);
     float time = uTime;
@@ -222,17 +232,23 @@ const fragmentShader = `
     // Add a tiny global drift so the entire sky feels alive while the regional
     // vectors keep the individual cloud groups from moving as one flat image.
     vec2 globalDrift = vec2(
-      sin(time * 0.055) * 0.0028,
-      cos(time * 0.041) * 0.0009
+      sin(time * 0.055) * 0.0017,
+      cos(time * 0.041) * 0.0006
     );
 
-    vec2 warpedUv =
-      imageUv +
+    // Fade motion near the source-image bounds so UV motion does not repeatedly
+    // sample the final edge texel and create visible horizontal smearing.
+    float edgeFade = edgeAttenuation(imageUv, 0.035, 0.07);
+
+    vec2 totalMotion =
       globalDrift +
       zoneFlow * atmosphereMask +
       noiseFlow * distortionAmount * atmosphereMask;
 
-    warpedUv = clamp(warpedUv, vec2(0.001), vec2(0.999));
+    vec2 warpedUv = imageUv + totalMotion * edgeFade;
+
+    // Keep a safer sampling margin as a final guard against texture-edge drag.
+    warpedUv = clamp(warpedUv, vec2(0.01), vec2(0.99));
 
     vec4 sky = texture2D(uSky, warpedUv);
     vec3 color = sky.rgb;
@@ -271,9 +287,18 @@ const fragmentShader = `
       * uSunRayOpacity;
 
     float halo = exp(-sunDistance * sunDistance * 7.5) * uSunIntensity;
-    vec3 warmLight = vec3(1.0, 0.79, 0.52);
+    float flareCore =
+      exp(-sunDistance * sunDistance * 24.0) * uSunIntensity * 0.22;
+    float flareBloom =
+      exp(-sunDistance * sunDistance * 4.2) * uSunIntensity * 0.20;
+    vec3 warmLight = vec3(1.0, 0.80, 0.54);
 
-    color += warmLight * (rays + halo * 0.16);
+    color += warmLight * (
+      rays * 1.18 +
+      halo * 0.18 +
+      flareCore +
+      flareBloom
+    );
 
     gl_FragColor = vec4(color, sky.a);
     #include <tonemapping_fragment>
