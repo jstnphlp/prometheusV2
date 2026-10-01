@@ -100,26 +100,7 @@
 }
 
 .header[data-navigation-open="true"] .brand {
-  min-height: 48px;
-}
-
-.header[data-navigation-open="true"] .ribbon {
-  width: 48px;
-  height: 48px;
-  padding-top: 7px;
-  clip-path: none;
-  border: 1px solid rgb(255 255 255 / 34%);
-  background: var(--cream);
-  color: var(--brand-flame);
-}
-
-.header[data-navigation-open="true"] .ribbon::before {
-  display: none;
-}
-
-.header[data-navigation-open="true"] .mark {
-  width: 20px;
-  height: 32px;
+  min-height: 44px;
 }
 
 .brand {
@@ -170,21 +151,8 @@
   color: var(--brand-flame);
 }
 
-.brand:is(:hover, :focus-visible) .ribbon::before,
-.header[data-navigation-open="true"] .ribbon::before {
+.brand:is(:hover, :focus-visible) .ribbon::before {
   transform: scale(1);
-}
-
-.header[data-navigation-open="true"] .ribbon {
-  color: var(--brand-flame);
-}
-
-.header[data-navigation-open="true"] .ribbon::before {
-  background: var(--cream);
-}
-
-.header[data-navigation-open="true"] .brand {
-  color: var(--brand-flame);
 }
 
 .brand:hover {
@@ -473,8 +441,8 @@
   position: fixed;
   z-index: 60;
   inset: 0;
-  background: rgb(13 12 11 / 24%);
-  backdrop-filter: blur(2px);
+  background: rgb(13 12 11 / 16%);
+  backdrop-filter: blur(1.5px);
   transition: opacity 420ms ease;
 }
 
@@ -486,17 +454,17 @@
 .navPanel {
   position: fixed;
   z-index: 70;
-  inset: 12px auto 12px 12px;
-  width: min(56vw, 980px);
-  height: calc(100dvh - 24px);
+  inset: 10px auto 10px 10px;
+  width: min(56.25vw, 992px);
+  height: calc(100dvh - 20px);
   overflow: hidden;
-  border: 1px solid rgb(255 255 255 / 14%);
-  border-radius: 16px;
-  background: rgb(72 71 74 / 84%);
+  border: 1px solid rgb(255 255 255 / 13%);
+  border-radius: 14px;
+  background: rgb(88 87 90 / 93%);
   color: var(--cream);
-  box-shadow: 0 24px 80px rgb(0 0 0 / 24%);
-  backdrop-filter: blur(18px) saturate(82%);
-  -webkit-backdrop-filter: blur(18px) saturate(82%);
+  box-shadow: 0 20px 64px rgb(0 0 0 / 18%);
+  backdrop-filter: blur(14px) saturate(88%);
+  -webkit-backdrop-filter: blur(14px) saturate(88%);
   transition:
     transform 650ms cubic-bezier(0.16, 0.86, 0.2, 1),
     opacity 420ms ease;
@@ -505,14 +473,14 @@
 .navPanel[data-starting-style],
 .navPanel[data-ending-style] {
   opacity: 0;
-  transform: translateX(calc(-100% - 24px));
+  transform: translateX(calc(-100% - 20px));
 }
 
 .navHeader {
   position: absolute;
   z-index: 2;
-  top: 7px;
-  left: 58px;
+  top: 8px;
+  left: calc(var(--banner-width) + 14px);
   display: flex;
   align-items: flex-start;
 }
@@ -523,17 +491,17 @@
   height: 48px;
   min-height: 48px;
   margin: 0;
-  border: 1px solid rgb(244 235 222 / 48%);
+  border: 1px solid rgb(244 235 222 / 45%);
   border-radius: 4px;
-  background: rgb(31 30 31 / 22%);
+  background: rgb(31 30 31 / 14%);
   color: var(--cream);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
 }
 
 .menuClose:is(:hover, :focus-visible) {
-  border-color: rgb(244 235 222 / 76%);
-  background: rgb(244 235 222 / 10%);
+  border-color: rgb(244 235 222 / 72%);
+  background: rgb(244 235 222 / 8%);
   color: var(--cream);
 }
 
@@ -563,33 +531,40 @@
   display: grid;
   width: 100%;
   height: 100%;
-  grid-template-columns: minmax(230px, 35%) minmax(0, 1fr);
+  grid-template-areas:
+    "head content"
+    "head bottom";
+  grid-template-rows: 1fr auto;
+  grid-template-columns: minmax(250px, 35.2%) minmax(0, 1fr);
+  padding: 16px 0;
 }
 
 .navUtility {
+  grid-area: head;
   display: flex;
   min-width: 0;
   flex-direction: column;
-  padding: 96px clamp(24px, 2.4vw, 42px) 22px;
-  border-right: 1px solid rgb(244 235 222 / 18%);
+  padding: 86px clamp(28px, 2.4vw, 42px) 22px;
+  border-right: 1px solid rgb(244 235 222 / 17%);
 }
 
 .navDescription {
   max-width: 250px;
   margin: 0;
-  color: rgb(244 235 222 / 82%);
+  color: rgb(244 235 222 / 86%);
   font-size: 0.78rem;
-  line-height: 1.6;
+  line-height: 1.58;
   text-wrap: balance;
 }
 
 .navLinks {
+  grid-area: content;
   display: flex;
   min-width: 0;
   flex-direction: column;
   align-items: flex-start;
   justify-content: flex-start;
-  padding: clamp(20px, 2.1vw, 32px) clamp(26px, 3vw, 52px);
+  padding: 4px clamp(26px, 2.15vw, 38px) 20px;
 }
 
 .navLinks a {
@@ -598,10 +573,10 @@
   padding: 0;
   color: var(--cream);
   font-family: var(--brand-serif);
-  font-size: clamp(3.25rem, 5vw, 5.5rem);
+  font-size: clamp(3rem, 4vw, 4.7rem);
   font-weight: 400;
-  line-height: 0.93;
-  letter-spacing: -0.038em;
+  line-height: 0.91;
+  letter-spacing: -0.036em;
   text-decoration: none;
   text-wrap: balance;
   transition:
@@ -611,25 +586,26 @@
 
 .navLinks a:is(:hover, :focus-visible) {
   color: var(--white);
-  transform: translateX(8px);
+  transform: translateX(6px);
 }
 
-.navFooter {
-  margin-top: auto;
-  padding-top: 32px;
+.navBottom {
+  grid-area: bottom;
+  align-self: end;
+  padding: 18px clamp(26px, 2.15vw, 38px) 0;
   color: rgb(244 235 222 / 92%);
   font-size: 0.78rem;
   line-height: 1.65;
 }
 
-.navFooter p {
+.navBottom p {
   margin: 0 0 6px;
   color: rgb(244 235 222 / 72%);
 }
 
-.navFooter a {
+.navBottom a {
   display: inline-flex;
-  min-height: 36px;
+  min-height: 34px;
   align-items: center;
   gap: 28px;
   border-bottom: 1px solid rgb(244 235 222 / 34%);
@@ -637,8 +613,8 @@
   text-decoration: none;
 }
 
-.navFooter a:is(:hover, :focus-visible) {
-  border-color: rgb(244 235 222 / 70%);
+.navBottom a:is(:hover, :focus-visible) {
+  border-color: rgb(244 235 222 / 68%);
 }
 
 .hero a:focus-visible,
@@ -755,15 +731,9 @@
     border-radius: 13px;
   }
 
-  .header[data-navigation-open="true"] .ribbon {
-    width: 44px;
-    height: 44px;
-    padding-top: 6px;
-  }
-
   .navHeader {
     top: 6px;
-    left: 58px;
+    left: calc(var(--banner-width) + 12px);
   }
 
   .menuClose {
@@ -774,8 +744,13 @@
   }
 
   .navLayout {
+    grid-template-areas:
+      "head"
+      "content"
+      "bottom";
     grid-template-columns: 1fr;
-    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    padding: 12px 0;
   }
 
   .navUtility {
@@ -789,18 +764,18 @@
     max-width: 260px;
   }
 
-  .navFooter {
-    display: none;
-  }
-
   .navLinks {
     justify-content: center;
-    padding: 22px;
+    padding: 20px 22px 12px;
   }
 
   .navLinks a {
-    font-size: clamp(2.75rem, 13vw, 4.6rem);
-    line-height: 0.96;
+    font-size: clamp(2.65rem, 12vw, 4.4rem);
+    line-height: 0.94;
+  }
+
+  .navBottom {
+    padding: 10px 22px 8px;
   }
 }
 
