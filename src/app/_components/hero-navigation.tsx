@@ -1,7 +1,7 @@
 "use client";
 
 import { Dialog } from "@base-ui/react/dialog";
-import { useRef, useState } from "react";
+import { useState } from "react";
 
 import { appConfig } from "@/config/app";
 
@@ -16,7 +16,6 @@ const links = [
 
 export function HeroNavigation() {
   const [open, setOpen] = useState(false);
-  const closeRef = useRef<HTMLButtonElement>(null);
 
   return (
     <Dialog.Root open={open} onOpenChange={setOpen}>
@@ -31,34 +30,42 @@ export function HeroNavigation() {
             <span className={styles.mark} />
           </span>
         </a>
-        <Dialog.Trigger
-          className={styles.menuToggle}
-          aria-label="Open navigation"
-        >
-          <span className={styles.hamburger} aria-hidden="true">
-            <span />
-            <span />
-            <span />
-          </span>
-        </Dialog.Trigger>
+
+        {open ? (
+          <Dialog.Close
+            className={styles.menuToggle}
+            aria-label="Close navigation"
+          >
+            <span
+              className={styles.hamburger}
+              data-open="true"
+              aria-hidden="true"
+            >
+              <span />
+              <span />
+              <span />
+            </span>
+          </Dialog.Close>
+        ) : (
+          <Dialog.Trigger
+            className={styles.menuToggle}
+            aria-label="Open navigation"
+          >
+            <span className={styles.hamburger} aria-hidden="true">
+              <span />
+              <span />
+              <span />
+            </span>
+          </Dialog.Trigger>
+        )}
       </header>
 
       <Dialog.Portal>
         <Dialog.Backdrop className={styles.scrim} />
-        <Dialog.Popup className={styles.navPanel} initialFocus={closeRef}>
+        <Dialog.Popup className={styles.navPanel}>
           <Dialog.Title className={styles.srOnly}>
             {appConfig.name}
           </Dialog.Title>
-
-          <div className={styles.navHeader}>
-            <Dialog.Close
-              ref={closeRef}
-              className={styles.menuClose}
-              aria-label="Close navigation"
-            >
-              <span className={styles.closeIcon} aria-hidden="true" />
-            </Dialog.Close>
-          </div>
 
           <div className={styles.navLayout}>
             <aside className={styles.navUtility}>
