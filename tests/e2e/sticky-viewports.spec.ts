@@ -1,30 +1,48 @@
 import { expect, test } from "@playwright/test";
 
-test("the static gallery background blends into the hero and becomes solid when pinned", async ({
+test("the hero follows scroll while the hand holds the gallery's solid edge", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.emulateMedia({ reducedMotion: "no-preference" });
   await page.goto("/");
   const gallery = page.locator("#work");
+  const hero = page.locator("#top");
+  const figure = hero.locator('img[src*="figure.webp"]').locator("..");
+  const content = hero.locator("#hero-title").locator("../..");
+  const hand = gallery.locator('img[src*="figure.webp"]').locator("..");
   await expect(page.locator("main.viewport-stack")).toHaveAttribute(
     "data-sticky-ready",
     "true",
   );
   await expect(gallery).toHaveCSS("background-color", "rgb(24, 26, 27)");
+  await expect(gallery).toHaveCSS("mask-image", "none");
+  await expect(hero).toHaveCSS("overflow", "clip");
+  await expect(gallery).toHaveCSS("overflow", "hidden");
+  await expect(hand).toHaveCSS("clip-path", "inset(0px 0px 0px 82%)");
   await expect(gallery.locator("video")).toHaveCount(0);
-  await page.evaluate(() => window.scrollTo({ top: 810, behavior: "instant" }));
-  await expect
-    .poll(() =>
-      gallery.evaluate((element) =>
-        Number.parseFloat(
-          getComputedStyle(element).getPropertyValue("--gallery-seam"),
-        ),
-      ),
-    )
-    .toBeCloseTo(56, 1);
-  await page.evaluate(() => window.scrollTo({ top: 900, behavior: "instant" }));
-  await expect(gallery).toHaveCSS("--gallery-seam", "0px");
+  for (const scroll of [450, 900, 225, 0]) {
+    await page.evaluate(
+      (top) => window.scrollTo({ top, behavior: "instant" }),
+      scroll,
+    );
+    await expect(figure).toHaveCSS(
+      "transform",
+      `matrix(1, 0, 0, 1, 0, ${-scroll})`,
+    );
+    await expect(content).toHaveCSS(
+      "transform",
+      `matrix(1, 0, 0, 1, 0, ${-scroll})`,
+    );
+    await expect
+      .poll(async () => {
+        const handBox = (await hand.boundingBox())!;
+        const galleryBox = (await gallery.boundingBox())!;
+        return handBox.y + handBox.height - galleryBox.y;
+      })
+      .toBeCloseTo(40.5, 1);
+    await expect(gallery).toHaveCSS("mask-image", "none");
+  }
 });
 
 for (const reducedMotion of ["reduce", "no-preference"] as const) {
@@ -45,16 +63,7 @@ for (const reducedMotion of ["reduce", "no-preference"] as const) {
     const gallery = page.locator("#work");
     await expect.poll(async () => (await hero.boundingBox())!.y).toBe(0);
     const galleryTop = (await gallery.boundingBox())!.y;
-    await expect
-      .poll(() =>
-        gallery.evaluate((element) =>
-          Number.parseFloat(
-            getComputedStyle(element).getPropertyValue("--gallery-seam"),
-          ),
-        ),
-      )
-      .toBeCloseTo(252, 1);
-    await expect(gallery).not.toHaveCSS("mask-image", "none");
+    await expect(gallery).toHaveCSS("mask-image", "none");
     // Activate the partially visible book without scrolling it into view first.
     await page
       .getByRole("button", { name: "Read Furniture Odyssey" })

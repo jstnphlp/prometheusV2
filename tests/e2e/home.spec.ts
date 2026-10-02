@@ -34,6 +34,57 @@ test("the editorial action supports hover, focus, and reduced motion", async ({
   await expect(arrow).toHaveCSS("transition-duration", "0s");
 });
 
+test("navigation returns on upward scroll and remains accessible", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+  const header = page.locator("header[data-navigation-visible]");
+  const trigger = page.getByRole("button", { name: "Open navigation" });
+  await expect(header).toHaveCSS("position", "fixed");
+  await page.evaluate(() => window.scrollTo({ top: 1400, behavior: "instant" }));
+  await expect(header).toHaveAttribute("data-navigation-visible", "false");
+  await expect(trigger).not.toBeInViewport();
+  await page.evaluate(() => window.scrollTo({ top: 1200, behavior: "instant" }));
+  await expect(header).toHaveAttribute("data-navigation-visible", "true");
+  await expect(trigger).toBeInViewport();
+  await trigger.click();
+  const dialog = page.getByRole("dialog", { name: "Prometheus" });
+  await expect(dialog).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(dialog).toBeHidden();
+  await expect(trigger).toBeFocused();
+
+  await page.evaluate(() => window.scrollTo({ top: 1600, behavior: "instant" }));
+  await expect(header).toHaveAttribute("data-navigation-visible", "false");
+  await expect(trigger).not.toBeInViewport();
+  await page.evaluate(() => window.scrollTo({ top: 1500, behavior: "instant" }));
+  await expect(trigger).toBeInViewport();
+  await trigger.click();
+  await dialog.getByRole("button", { name: "Close navigation" }).click();
+  await expect(dialog).toBeHidden();
+  await page.mouse.wheel(0, 400);
+  await expect(header).toHaveAttribute("data-navigation-visible", "false");
+  await expect(trigger).not.toBeInViewport();
+});
+
+test("keyboard navigation stays visible until pointer scrolling resumes", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+  const header = page.locator("header[data-navigation-visible]");
+  const brand = page.getByRole("link", { name: "Prometheus home" });
+  await expect(page.locator("main.viewport-stack")).toHaveAttribute(
+    "data-sticky-ready",
+    "true",
+  );
+  await page.keyboard.press("Tab");
+  await expect(brand).toBeFocused();
+  await expect(header).toHaveAttribute("data-navigation-keyboard", "true");
+  await page.evaluate(() => window.scrollTo({ top: 1400, behavior: "instant" }));
+  await expect(header).toHaveAttribute("data-navigation-visible", "false");
+  await expect(brand).toBeInViewport();
+  await page.mouse.wheel(0, 200);
+  await expect(brand).not.toBeInViewport();
+});
+
 test("preserves menu Escape handling and section navigation", async ({
   page,
 }) => {

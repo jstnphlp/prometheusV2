@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 
 import "@fontsource/dm-sans/latin-400.css";
 import "@fontsource/dm-sans/latin-500.css";
@@ -12,8 +13,10 @@ import styles from "./project-gallery.module.css";
 
 export function ProjectGallerySection({
   standalone = false,
+  edgeDecoration,
 }: {
   standalone?: boolean;
+  edgeDecoration?: ReactNode;
 }) {
   const Heading = standalone ? "h1" : "h2";
   return (
@@ -23,6 +26,7 @@ export function ProjectGallerySection({
       aria-labelledby="gallery-title"
     >
       <GalleryBackdrop />
+      {edgeDecoration}
       <header className={styles.header}>
         {standalone && (
           <Link

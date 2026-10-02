@@ -12,6 +12,7 @@ beforeEach(() => {
   longHeight = 1200;
   scheduled = undefined;
   vi.stubGlobal("innerHeight", 800);
+  vi.stubGlobal("scrollY", 0);
   vi.stubGlobal("matchMedia", () => ({ matches: true }));
   vi.stubGlobal(
     "ResizeObserver",
@@ -89,4 +90,30 @@ it("uses the flow position for hash navigation and keeps a bottom-positioned tit
     top: 1104,
     behavior: "instant",
   });
+});
+
+it("moves the hero with scroll in both directions, clamps its travel, and cleans up", () => {
+  const { container, unmount } = panels();
+  const hero = container.querySelector<HTMLElement>("#first")!;
+  expect(hero.style.getPropertyValue("--hero-scroll-shift")).toBe("0px");
+
+  for (const [scroll, shift] of [
+    [300, "-300px"],
+    [1200, "-800px"],
+    [100, "-100px"],
+    [-20, "0px"],
+  ] as const) {
+    vi.stubGlobal("scrollY", scroll);
+    fireEvent.scroll(window);
+    act(() => scheduled?.(0));
+    expect(hero.style.getPropertyValue("--hero-scroll-shift")).toBe(shift);
+  }
+
+  fireEvent.scroll(window);
+  unmount();
+  expect(window.cancelAnimationFrame).toHaveBeenCalledWith(1);
+  expect(hero.style.getPropertyValue("--hero-scroll-shift")).toBe("");
+  vi.mocked(window.requestAnimationFrame).mockClear();
+  fireEvent.scroll(window);
+  expect(window.requestAnimationFrame).not.toHaveBeenCalled();
 });

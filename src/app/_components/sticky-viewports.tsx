@@ -17,6 +17,26 @@ export function StickyViewports({ children }: { children: ReactNode }) {
       { section: HTMLElement; start: number; height: number }
     >();
     let frame: number | undefined;
+    let scrollFrame: number | undefined;
+
+    function syncHero() {
+      const hero = sections[0];
+      const position = hero && positions.get(hero.id);
+      if (!position) return;
+      const offset = Math.min(
+        position.height,
+        Math.max(0, window.scrollY - position.start),
+      );
+      hero.style.setProperty("--hero-scroll-shift", `${-offset}px`);
+    }
+
+    function scrolled() {
+      if (scrollFrame === undefined)
+        scrollFrame = window.requestAnimationFrame(() => {
+          scrollFrame = undefined;
+          syncHero();
+        });
+    }
 
     function measure() {
       let start = root!.getBoundingClientRect().top + window.scrollY;
@@ -32,6 +52,7 @@ export function StickyViewports({ children }: { children: ReactNode }) {
         start += height;
       });
       root!.dataset.stickyReady = "true";
+      syncHero();
     }
 
     function navigate(id: string, behavior: ScrollBehavior) {
@@ -106,6 +127,7 @@ export function StickyViewports({ children }: { children: ReactNode }) {
     const observer = new ResizeObserver(measure);
     sections.forEach((section) => observer.observe(section));
     window.addEventListener("resize", measure);
+    window.addEventListener("scroll", scrolled, { passive: true });
     window.addEventListener("hashchange", hashChanged);
     document.addEventListener("click", clicked);
     navigate(window.location.hash.slice(1), "instant");
@@ -113,13 +135,16 @@ export function StickyViewports({ children }: { children: ReactNode }) {
     return () => {
       observer.disconnect();
       window.cancelAnimationFrame(frame ?? 0);
+      window.cancelAnimationFrame(scrollFrame ?? 0);
       window.removeEventListener("resize", measure);
+      window.removeEventListener("scroll", scrolled);
       window.removeEventListener("hashchange", hashChanged);
       document.removeEventListener("click", clicked);
       delete root.dataset.stickyReady;
       sections.forEach((section) => {
         section.style.removeProperty("--viewport-top");
         section.style.removeProperty("--viewport-order");
+        section.style.removeProperty("--hero-scroll-shift");
       });
     };
   }, []);

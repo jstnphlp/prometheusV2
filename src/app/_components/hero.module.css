@@ -2,8 +2,7 @@
   position: relative;
   display: flex;
   height: 100svh;
-  overflow-x: clip;
-  overflow-y: visible;
+  overflow: clip;
   z-index: 1;
   isolation: isolate;
   background: var(--brand-night);
@@ -24,7 +23,6 @@
 }
 
 .figure {
-  --hand-overlap: 25px;
   --figure-offset: 4.5svh;
   position: absolute;
   z-index: 0;
@@ -32,15 +30,16 @@
   right: 4%;
   bottom: calc(-1 * var(--figure-offset));
   width: min(62vw, 110svh);
-  /* Keep the full supporting hand over the next section; clip only the torso. */
-  clip-path: polygon(
-    0 0,
-    100% 0,
-    100% 100%,
-    82% 100%,
-    82% calc(100% - var(--figure-offset)),
-    0 calc(100% - var(--figure-offset))
-  );
+  transform: translateY(var(--hero-scroll-shift, 0px));
+}
+
+.holdingHand {
+  z-index: 4;
+  top: 0;
+  bottom: auto;
+  /* The gallery clips the body while the fingertips overlap its solid edge. */
+  clip-path: inset(0 0 0 82%);
+  transform: translateY(calc(-100% + var(--figure-offset)));
 }
 
 .figure img {
@@ -72,7 +71,7 @@
 }
 
 .header {
-  position: absolute;
+  position: fixed;
   z-index: 80;
   inset: 0 0 auto;
   display: flex;
@@ -82,6 +81,7 @@
   padding: 0 var(--hero-gutter);
   pointer-events: none;
   animation: navEnter 700ms ease both;
+  transition: transform 300ms ease;
 }
 
 .header a,
@@ -89,8 +89,15 @@
   pointer-events: auto;
 }
 
-.header[data-navigation-open="true"] {
-  position: fixed;
+.header[data-navigation-visible="false"]:not(
+    [data-navigation-open="true"]
+  ):not([data-navigation-keyboard="true"]:focus-within) {
+  transform: translateY(-100%);
+}
+
+.header[data-navigation-floating="true"] .menuToggle {
+  border-radius: 50%;
+  background: var(--brand-night);
 }
 
 .header[data-navigation-open="true"] .menuToggle {
@@ -216,6 +223,7 @@
   width: 100%;
   min-height: 0;
   grid-template-rows: minmax(0, 1fr);
+  transform: translateY(var(--hero-scroll-shift, 0px));
   padding: clamp(112px, 16svh, 180px) var(--hero-gutter) clamp(32px, 5svh, 64px);
 }
 
@@ -625,7 +633,7 @@
   }
 
   .figure {
-    --figure-offset: var(--hand-overlap);
+    --figure-offset: 25px;
     right: 1.5%;
     width: min(95vw, 115svh);
   }

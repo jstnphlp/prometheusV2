@@ -1,6 +1,6 @@
 import { ProjectGallerySection } from "@/components/portfolio/project-gallery/project-gallery-section";
 
-import { Hero } from "./_components/hero";
+import { Hero, HeroHand } from "./_components/hero";
 import { StickyViewports } from "./_components/sticky-viewports";
 
 const capabilities = [
@@ -17,7 +17,7 @@ export default function Home() {
     <StickyViewports>
       <Hero />
 
-      <ProjectGallerySection />
+      <ProjectGallerySection edgeDecoration={<HeroHand />} />
 
       <section
         id="approach"

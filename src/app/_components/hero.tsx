@@ -3,6 +3,28 @@ import Image from "next/image";
 import { HeroNavigation } from "./hero-navigation";
 import styles from "./hero.module.css";
 
+function FigureImage() {
+  return (
+    <Image
+      src="/assets/hero/figure.webp"
+      alt=""
+      width={986}
+      height={718}
+      sizes="(max-width: 640px) 124vw, (max-width: 1000px) 95vw, 62vw"
+      loading="eager"
+      draggable={false}
+    />
+  );
+}
+
+export function HeroHand() {
+  return (
+    <div className={`${styles.figure} ${styles.holdingHand}`} aria-hidden="true">
+      <FigureImage />
+    </div>
+  );
+}
+
 export function Hero() {
   return (
     <>
@@ -20,15 +42,7 @@ export function Hero() {
           />
         </div>
         <div className={styles.figure} aria-hidden="true">
-          <Image
-            src="/assets/hero/figure.webp"
-            alt=""
-            width={986}
-            height={718}
-            sizes="(max-width: 640px) 124vw, (max-width: 1000px) 95vw, 62vw"
-            loading="eager"
-            draggable={false}
-          />
+          <FigureImage />
         </div>
 
         <div className={styles.content}>

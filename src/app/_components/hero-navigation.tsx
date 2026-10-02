@@ -1,7 +1,7 @@
 "use client";
 
 import { Dialog } from "@base-ui/react/dialog";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { appConfig } from "@/config/app";
 
@@ -17,10 +17,60 @@ const links = [
 export function HeroNavigation() {
   const [open, setOpen] = useState(false);
   const closeRef = useRef<HTMLButtonElement>(null);
+  const headerRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const header = headerRef.current;
+    if (!header) return;
+    let previousScroll = Math.max(0, window.scrollY);
+    header.dataset.navigationVisible = String(previousScroll <= 88);
+    header.dataset.navigationFloating = String(previousScroll > 88);
+
+    function scrolled() {
+      const scroll = Math.max(0, window.scrollY);
+      header!.dataset.navigationFloating = String(scroll > 88);
+      if (scroll <= 88) {
+        header!.dataset.navigationVisible = "true";
+        previousScroll = scroll;
+      } else if (Math.abs(scroll - previousScroll) >= 8) {
+        // Ignore small scroll fluctuations so the button does not flicker.
+        header!.dataset.navigationVisible = String(scroll < previousScroll);
+        previousScroll = scroll;
+      }
+    }
+
+    function keyboardUsed(event: KeyboardEvent) {
+      if (event.key === "Tab") header!.dataset.navigationKeyboard = "true";
+    }
+
+    function pointerUsed() {
+      header!.dataset.navigationKeyboard = "false";
+    }
+
+    window.addEventListener("scroll", scrolled, { passive: true });
+    document.addEventListener("keydown", keyboardUsed);
+    document.addEventListener("pointerdown", pointerUsed, { passive: true });
+    document.addEventListener("touchstart", pointerUsed, { passive: true });
+    window.addEventListener("wheel", pointerUsed, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", scrolled);
+      document.removeEventListener("keydown", keyboardUsed);
+      document.removeEventListener("pointerdown", pointerUsed);
+      document.removeEventListener("touchstart", pointerUsed);
+      window.removeEventListener("wheel", pointerUsed);
+    };
+  }, []);
 
   return (
     <Dialog.Root open={open} onOpenChange={setOpen}>
-      <header className={styles.header} data-navigation-open={open}>
+      <header
+        ref={headerRef}
+        className={styles.header}
+        data-navigation-open={open}
+        data-navigation-visible="true"
+        data-navigation-floating="false"
+        data-navigation-keyboard="false"
+      >
         <a
           className={styles.brand}
           href="#top"
