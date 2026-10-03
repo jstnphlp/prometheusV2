@@ -29,6 +29,7 @@ Do not copy experimental Figma layers into code merely because they are present 
 6. Lazy-load Three.js and the GLB assets so the second viewport does not compete with the hero for initial loading resources.
 7. Preserve an accessible DOM path for every action that can be performed through the 3D scene.
 8. Respect `prefers-reduced-motion` and provide a stable non-animated state.
+9. Keep analytics behind a small semantic event boundary and never make portfolio behavior depend on analytics availability.
 
 ## Proposed source layout
 
@@ -51,6 +52,9 @@ src/
   content/
     projects.ts
   lib/
+    analytics/
+      capture.ts
+      events.ts
     three/
       create-renderer.ts
       load-gltf.ts
@@ -69,6 +73,7 @@ public/
 `hero-menu.tsx` becomes a client island only if the polished artifact requires menu state or browser-driven motion.
 `project-gallery-client.tsx` owns the canvas, renderer lifecycle, GLB loading, raycasting, camera state, and animation mixer.
 `projects.ts` becomes the canonical source for project slug, title, summary, case-study content references, and the book model URL.
+`src/lib/analytics` becomes the canonical boundary for PostHog event names and event capture.
 
 ## Hero integration boundary
 
@@ -110,6 +115,26 @@ The React layer is responsible for:
 - Case-study presentation.
 - URL or overlay state.
 - Reduced-motion policy.
+- Reporting semantic analytics after meaningful interaction state changes.
+
+## Analytics boundary
+
+PostHog is an observational integration and must not become part of the portfolio's domain logic.
+Initialize the client once through Next.js client instrumentation when configuration is available.
+If PostHog is unavailable or misconfigured, portfolio navigation, animation, project selection, WebGL behavior, and case-study behavior must continue normally.
+
+Keep raw PostHog calls behind `src/lib/analytics`.
+Components should report semantic actions such as `project_selected` rather than implementation details such as raycast hits or pointer movement.
+Do not import PostHog into low-level renderer, loader, camera, animation-loop, or resource-disposal modules.
+
+Section progression should use browser observation such as `IntersectionObserver` rather than coupling analytics to Lenis scroll internals.
+Do not introduce high-frequency scroll, pointer, animation-frame, or camera telemetry.
+
+Visitors remain anonymous unless the product later adds a concrete identity requirement.
+Do not create person profiles, send names or email addresses, or infer lead identity from portfolio behavior.
+Session Replay must preserve masking and data-minimization expectations, especially if contact forms are introduced later.
+
+The event taxonomy, privacy policy, environment variables, and testing rules are defined in `docs/POSTHOG_ANALYTICS.md`.
 
 ## GLB asset contract
 
@@ -263,12 +288,16 @@ If a single book asset fails, keep the other projects usable and expose the fail
 If the pillar asset fails, do not block project access.
 
 Asset errors should be visible in development and recoverable in production.
+Analytics errors should be silent from the visitor's perspective and must never change the success path of an interaction.
 
 ## Testing strategy
 
 Unit tests should cover project data and interaction state independent of WebGL.
 Component tests should cover loading, fallback, reduced-motion, and accessible project controls.
 E2E tests should verify that each project is reachable from the second viewport and that the hero navigation remains usable.
+
+Analytics tests should verify the Prometheus event contract without depending on a live PostHog network connection.
+Analytics-disabled behavior must remain a supported test path.
 
 Do not make pixel-perfect WebGL screenshots the only correctness test because GPU output can differ across environments.
 Use browser-level visual checks selectively after the basic interaction path is stable.
