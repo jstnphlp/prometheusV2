@@ -4,6 +4,7 @@
 
 Only the Hero and second viewport are in the active implementation scope.
 No additional portfolio viewports should be built until these two slices are visually and technically stable.
+Analytics may be added as a supporting vertical slice because it observes existing interactions without changing the visual roadmap.
 
 ## Phase 0 - Foundation
 
@@ -117,3 +118,39 @@ Exit criteria:
 - Project access works without WebGL.
 - The hero remains the loading priority.
 - The 3D scene is responsive, disposable, and measured rather than permanently rendering offscreen.
+
+## Analytics vertical slice - PostHog
+
+Goal: measure meaningful portfolio behavior without changing the visual experience or coupling analytics to the Three.js runtime.
+
+The implementation instructions live in `docs/POSTHOG_IMPLEMENTATION_PROMPT.md`.
+The event and privacy contract lives in `docs/POSTHOG_ANALYTICS.md`.
+
+Work:
+
+- Add `posthog-js`.
+- Initialize it through `instrumentation-client.ts` only when the required public environment variables are configured.
+- Add a small typed analytics boundary under `src/lib/analytics`.
+- Track meaningful navigation, section progression, project selection, available case-study actions, and real contact actions.
+- Keep visitors anonymous.
+- Keep Session Replay privacy-conscious.
+- Keep analytics outside renderer, loader, raycast-loop, camera, animation-frame, and resource-disposal modules.
+- Keep PostHog optional in local development and CI.
+
+Verification:
+
+- The site behaves normally without PostHog environment variables.
+- PostHog initializes once when configured.
+- Semantic events use the documented names and properties.
+- Section progression does not introduce high-frequency scroll listeners.
+- Project interaction succeeds even when analytics capture fails.
+- Tests do not depend on live PostHog ingestion.
+- Lint, typecheck, unit tests, build, and E2E checks pass.
+
+Initial analysis after deployment:
+
+- Confirm traffic and page activity are arriving.
+- Confirm section progression events are deduplicated.
+- Confirm project selections include `project_slug`.
+- Review a small sample of Session Replay recordings for privacy and interaction quality.
+- Build the first traffic, section progression, project engagement, and project popularity insights.
